@@ -72,7 +72,7 @@ pipeline {
 
 	    //pipeline各阶段
 	    stages {
-	        stage('代码获取') {
+		    stage('代码获取') {
 	            steps {
 	                script {
 	                    def split = params.server.split(",")
@@ -83,14 +83,47 @@ pipeline {
 	                }
 	                echo "Starting fetchCode from ${params.repoURL}............"
 	                svn checkout params.URL . --username=CRED_ID --branch=repoBranch
-	            }
-	        }
-
-	        stage('单元测试') {
-	            steps {
-	                
-	            }
-	        }
+		    }
+		    }
+		    
+		    stage('单元测试') {
+			    steps {
+				    echo "Starting unitTest............"
+			    }
+		    }
+		    stage('静态代码检查') {
+			            steps {
+					    echo "Starting codeCheck with SonarQube............"
+				            withSonarQubeEnv('SonarQube') {
+				            sh 'mvn -f pom.xml clean compile sonar:sonar'
+					    }
+				    
+				    script {
+					    timeout(20) {
+						    def qg = waitForQualityGate()
+						    if (qg.status != 'OK') {
+							    error "SonarQube的质量阀未通过，请及时修改！failure:${qg.status}"
+						    }
+					    }
+				    }
+			    }
+		    }
+		    stage('部署测试环境') {
+			    steps {
+				    echo "Starting deploy to ${serverIP}........"
+				    
+			    }
+		    }
+		    
+		    stage('接口自动化测试') {
+		    }
+		    
+		    stage('UI自动化测试') {
+		    
+		    }
+		    
+		    stage('通知测试人员人工验收') {
+		    }
 	    }
 	}
 }
