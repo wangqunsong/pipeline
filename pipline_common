@@ -1,0 +1,96 @@
+#!groovy
+pipeline {
+	agent any  //选择执行pipeline的节点
+
+    //动态参数
+	parameters {
+	string(name:'repoURL',defaultValue:'svn://*******',description:'svn代码路径')
+	string(name:'repoName',defaultValue:'master',description:'分支')
+	string(name:'pomPath',defaultValue:'pom.xml',dexcription:'pom文件路径')
+	string(name:'warPath',deaultValue:'/app/war/*.war',description:'war包路径')
+	choice(name:'server',defaultValue:'10.10.10.23,9001,***,***\n10.10.10.114,9001,***,***',description:'测试环境地址（IP+Tomcat端口+name+password）')
+	choice(name:'dubboPort',defaultValue:'3008',description:'dubbo服务端口')
+	string(name:'lineCoverage',defaultValue:'20',description:'单元测试代码覆盖率要求（%），小于此值时构建失败')
+	booleanparam(name:'isCommitQA',defaultValue:true,description:'是否邮件通知测试人员人工验收')
+	}
+
+	//配置工具
+	tools {
+	    maven 'maven3'
+	    jdk   'jdk1.8'
+	}
+
+	//常量参数，区别于动态参数：确定后一般无需修改
+	environment{
+	   CRED_ID='*******'  //svn服务器只读账号
+	   QA_EMAIL='test@test.com' //测试人员邮箱
+	   ITEST_JOBNAME='dep_manage' //接口测试的job名称
+	}
+
+	options {
+	    buildDiscarder(logRotator(numToKeepStr:'10'))  //保持构建的最大个数
+	}
+
+	triggers {
+	    pollSCM('H 4 * * 1-5')   //定期构建
+	}
+    
+    //构建完成后的步骤
+	post {
+	    //成功
+	    success{
+	        script {
+	            wrap([$class:'BuildUser']) {
+	            mail to: "${BUILD_USER_EMAIL }",
+	            subject: "Pipeline '${JOB_NAME}' (${BUILD_NUMBER}) result",
+	            body: "${BUID_USER}'s pipline '${JOB_NAME}' (${BUILD_NAMBER}) run success\n 请及时前往${env.BUILD_URL}查看"
+	            }
+	        }
+	    }
+        
+        //失败
+	    failure{
+	        script {
+	            wrap([$class:'BuildUser']) {
+	            mail to: "${BUILD_USER_EMAIL }",
+	            subject: "Pipeline '${JOB_NAME}' (${BUILD_NUMBER}) result",
+	            body: "${BUID_USER}'s pipline '${JOB_NAME}' (${BUILD_NAMBER}) run failure\n 请及时前往${env.BUILD_URL}查看"
+	            }
+	        }
+	    }
+        
+        //unstable
+	    unstable{
+	        script {
+	        	wrap([$class:'BuildUser']) {
+	            mail to: "${BUILD_USER_EMAIL }",
+	            subject: "Pipeline '${JOB_NAME}' (${BUILD_NUMBER}) result",
+	            body: "${BUID_USER}'s pipline '${JOB_NAME}' (${BUILD_NAMBER}) run unstable\n 请及时前往${env.BUILD_URL}查看"
+	            }
+	        }
+	    }
+
+	    //pipeline各阶段
+	    stages {
+	        stage('代码获取') {
+	            steps {
+	                script {
+	                    def split = params.server.split(",")
+	                    serverIP = split[0]
+	                    tomcatPort = split[1]
+	                    serverName = split[2]
+	                    serverPassword = split[3] 
+	                }
+	                echo "Starting fetchCode from ${params.repoURL}............"
+	                svn checkout params.URL . --username=CRED_ID --branch=repoBranch
+	            }
+	        }
+
+	        stage('单元测试') {
+	            steps {
+	                
+	            }
+	        }
+	    }
+	}
+}
