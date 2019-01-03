@@ -11,7 +11,7 @@ pipeline {
 	choice(name:'server',choices:'10.10.10.23,9001,***,***\n10.10.10.114,9001,***,***',description:'测试环境地址（IP+Tomcat端口+name+password）')
 	choice(name:'dubboPort',choices:'3008',description:'dubbo服务端口')
 	string(name:'lineCoverage',defaultValue:'20',description:'单元测试代码覆盖率要求（%），小于此值时构建失败')
-	booleanparam(name:'isCommitQA',defaultValue:true,description:'是否邮件通知测试人员人工验收')
+	booleanParam(name: 'isCommitQA',description: '是否邮件通知测试人员进行人工验收',defaultValue: false )
 	}
 
 	//配置工具
