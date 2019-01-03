@@ -8,8 +8,8 @@ pipeline {
 	string(name:'repoName',defaultValue:'master',description:'分支')
 	string(name:'pomPath',defaultValue:'pom.xml',dexcription:'pom文件路径')
 	string(name:'warPath',deaultValue:'/app/war/*.war',description:'war包路径')
-	choice(name:'server',defaultValue:'10.10.10.23,9001,***,***\n10.10.10.114,9001,***,***',description:'测试环境地址（IP+Tomcat端口+name+password）')
-	choice(name:'dubboPort',defaultValue:'3008',description:'dubbo服务端口')
+	choice(name:'server',choices:'10.10.10.23,9001,***,***\n10.10.10.114,9001,***,***',description:'测试环境地址（IP+Tomcat端口+name+password）')
+	choice(name:'dubboPort',choices:'3008',description:'dubbo服务端口')
 	string(name:'lineCoverage',defaultValue:'20',description:'单元测试代码覆盖率要求（%），小于此值时构建失败')
 	booleanparam(name:'isCommitQA',defaultValue:true,description:'是否邮件通知测试人员人工验收')
 	}
