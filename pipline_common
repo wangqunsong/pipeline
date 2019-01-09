@@ -32,7 +32,7 @@ pipeline {
 	}
 
 	triggers {
-	    pollSCM('H 4 * * 1-5')   //定期构建
+	    pollSCM('H 4 * * 1-5')   //定期构建(minute hour day month week command:分 时 日 月 周)
 	}
     
     //构建完成后的步骤
@@ -40,6 +40,7 @@ pipeline {
 	    //成功
 	    success{
 	        script {
+	            //预先安装 user build vars plugin插件，使jenkins获取build信息
 	            wrap([$class:'BuildUser']) {
 	            mail to: "${BUILD_USER_EMAIL }",
 	            subject: "Pipeline '${JOB_NAME}' (${BUILD_NUMBER}) result",
@@ -101,6 +102,8 @@ pipeline {
 				    script {
 					    timeout(20) {
 						    def qg = waitForQualityGate()
+						    //利用sonar webhook功能通知pipeline代码检测结果，未通过质量阈，pipeline将会fail
+						    //SonarQube需要提前配置sonar-scanner的webhooks
 						    if (qg.status != 'OK') {
 							    error "SonarQube的质量阀未通过，请及时修改！failure:${qg.status}"
 						    }
